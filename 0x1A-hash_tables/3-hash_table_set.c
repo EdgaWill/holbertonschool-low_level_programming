@@ -1,49 +1,70 @@
 #include "hash_tables.h"
-#include <string.h>
-#include <stdio.h>
-
 /**
- * hash_table_set - function that adds an element to the hash table
- * @ht: pointer
- * @key: pointer
- * @value: pointer
+ * hash_table_set - Adds an element to the hash table
+ * @ht: Is the hash table you want to add or update the key/value to
+ * @key: the key
+ * @value: Is the value associated
  *
- * Return: 1 if it succeeded,
+ * Return: 0 otherwise
  */
 int hash_table_set(hash_table_t *ht, const char *key, const char *value)
 {
-	unsigned long int index;
-	hash_node_t *nodes, *header, *unode_1;
+	hash_node_t *node = NULL, **ptr = NULL;
+	unsigned long int index = 0;
 
-
-	if (!strcmp(key, "") || !key || !strcmp(value, "") || !value)
+	if (!ht || !key || !strcmp(key, "") || !value)
 		return (0);
-
-	index = key_index((unsigned char *)key, ht->size);
-	header = ht->array[index];
-	unode_1 = header;
-
-	while (unode_1)
+	node = malloc(sizeof(hash_node_t));
+	if (node == NULL)
 	{
-		if (!strcmp(unode_1->key, key))
+		return (0);
+	}
+	index = key_index((unsigned char *)key, ht->size);
+	ptr = &(ht->array[index]);
+	node->key = strdup(key);
+	node->value = strdup(value);
+	node->next = NULL;
+	set_check(ptr, &node);
+
+	return (1);
+}
+
+
+/**
+ * set_check - set and check nodes
+ * @head: pointing to hash_node in the hash table
+ * @node: node to add in the index of the hash table
+ *
+ * Return: Nothing
+ */
+void set_check(hash_node_t **head, hash_node_t **node)
+{
+	hash_node_t *tail = *head;
+
+	if (!head)
+	{
+		free((*node)->key);
+		free((*node)->value);
+		free(*node);
+		return;
+	}
+	if (*head)
+	{
+		while (tail)
 		{
-			free(unode_1->value);
-			unode_1->value = strdup(value);
-			return (1);
+			if (strcmp(tail->key, (*node)->key) == 0)
+			{
+				free(tail->value);
+				tail->value = strdup((*node)->value);
+				free((*node)->value);
+				free((*node)->key);
+				free(*node);
+				return;
+			}
+			tail = tail->next;
 		}
-		unode_1 = unode_1->next;
 	}
 
-	nodes = malloc(sizeof(hash_node_t));
-	if (nodes == NULL)
-		return (0);
-
-	nodes->key = strdup((char *)key);
-	nodes->value = strdup(value);
-	nodes->next = header;
-
-	header = nodes;
-
-	ht->array[index] = header;
-	return (1);
+	(*node)->next = *head;
+	*head = *node;
 }
